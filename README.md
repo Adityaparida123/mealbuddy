@@ -58,7 +58,7 @@ stores.
 
 | Variable | Side | Required | Description |
 | --- | --- | --- | --- |
-| `MONGODB_URI` | server | prod | MongoDB Atlas connection string (`mongodb+srv://…`) for database `meal_buddy`. Empty in dev → local JSON store. |
+| `MONGODB_URI` | server | prod | MongoDB Atlas connection string (your Atlas dashboard → Connect → Drivers) for database `meal_buddy`. Empty in dev → local JSON store. |
 | `MONGODB_DB` | server | no | Atlas database name. Default `meal_buddy`. |
 | `JWT_SECRET` | server | prod | 32+ char secret signing JWTs. Generate: `openssl rand -hex 32`. |
 | `JWT_EXPIRES_IN` | server | no | JWT lifetime. Default `7d`. |
@@ -100,11 +100,8 @@ Browser (Vercel SPA)  --HTTPS /api/*-->  Express API (Render)  --MongoDB-->  Atl
    strong password, **read/write** on `meal_buddy`.
 3. Security → Network Access → allow the IPs that will connect (or `0.0.0.0/0`
    with Atlas IP restrictions via the Render/Vercel firewall).
-4. Database → Connect → "Drivers" → copy the connection string:
-
-   ```
-   mongodb+srv://mealbuddy:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority
-   ```
+4. Database → Connect → "Drivers" → copy the connection string and paste it
+   as the value of `MONGODB_URI` (format: `your_mongodb_atlas_connection_string`).
 5. On first boot the backend **seeds** the 17-item dataset menu + demo accounts
    into collections: `users`, `menuItems`, `foodProfiles`, `favorites`, `conversations`.
 
