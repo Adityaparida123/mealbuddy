@@ -1,9 +1,12 @@
 # Render Blueprint — Meal Buddy backend (Express + MongoDB Atlas)
 # Docs: https://render.com/docs/blueprint-spec
 #
-# Deploys ONLY the Node/Express backend from backend/. TypeScript runs via tsx
-# (no compile step; `npm run build` is a typecheck). The frontend is deployed
-# separately on Vercel (see vercel.json, rootDirectory: frontend).
+# Deploys ONLY the Node/Express backend from backend/. The frontend is
+# deployed separately on Vercel (Root Directory = frontend in Vercel project
+# settings). Render must never run the root package.json "build" script.
+#
+# Root Directory = backend, so the build/start commands below run inside
+# backend/ using backend/package.json (build = tsc typecheck, start = tsx).
 #
 # Secrets (MONGODB_URI, JWT_SECRET, GEMINI_API_KEY...) are set in the Render
 # dashboard as Environment Variables with `sync: false` here — NEVER commit
@@ -14,7 +17,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -34,6 +37,8 @@ services:
       - key: AI_PROVIDER
         sync: false
         value: gemini
+      - key: GEMINI_MODEL
+        sync: false
       # Comma-separated allowed origins for CORS -> your Vercel frontend URL.
       - key: CLIENT_ORIGIN
         sync: false
