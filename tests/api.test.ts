@@ -1,7 +1,7 @@
 // Server API smoke test (runs the real Express app + JSON store via tsx).
 // No Postgres or external services required.
 import { createServer } from 'http';
-import app from '../server/src/app';
+import app from '../backend/src/app';
 
 let pass = 0;
 let fail = 0;

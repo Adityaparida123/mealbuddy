@@ -12,7 +12,7 @@ import openpyxl
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SRC = os.path.join(ROOT, "canteen_chatbot_dataset (2).xlsx")
-DEST = os.path.join(ROOT, "src", "data", "menu.json")
+DEST = os.path.join(ROOT, "shared", "src", "data", "menu.json")
 
 SPICY_WORDS = {"spicy", "chilli", "chili", "spices", "pepper", "hot", "masala"}
 

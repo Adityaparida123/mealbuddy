@@ -3,13 +3,15 @@ node_modules
 
 # Build output
 dist
-server/dist
+frontend/dist
+backend/dist
 
 # Environment files (never commit real credentials)
 .env
 .env.*
 !.env.example
-!server/.env.example
+!frontend/.env.example
+!backend/.env.example
 *.local
 
 # Local data / logs

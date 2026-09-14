@@ -1,9 +1,9 @@
-import { getRecommendation } from '../src/engine';
-import { emptyContext } from '../src/types/chat';
-import menu from '../src/data/menu.json';
-import type { MenuItem } from '../src/types/menu';
-import type { ChatContext } from '../src/types/chat';
-import type { Recommendation } from '../src/types/recommendation';
+import { getRecommendation } from '../shared/src/engine';
+import { emptyContext } from '../shared/src/types/chat';
+import menu from '../shared/src/data/menu.json';
+import type { MenuItem } from '../shared/src/types/menu';
+import type { ChatContext } from '../shared/src/types/chat';
+import type { Recommendation } from '../shared/src/types/recommendation';
 
 const MENU = menu as MenuItem[];
 

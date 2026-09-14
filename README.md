@@ -30,7 +30,7 @@ Match scores are computed from real criteria (food/craving match 40%, tag match 
 
 ## Dataset
 
-The menu comes from `canteen_chatbot_dataset (2).xlsx`, sheet **`Menu_Items`** (17 items), normalized to `src/data/menu.json` by `scripts/convert_menu.py`. Fields that the dataset does not support are `null` / `[]` — nothing is fabricated.
+The menu comes from `canteen_chatbot_dataset (2).xlsx`, sheet **`Menu_Items`** (17 items), normalized to `shared/src/data/menu.json` by `scripts/convert_menu.py`. Fields that the dataset does not support are `null` / `[]` — nothing is fabricated.
 
 ```bash
 python scripts/convert_menu.py            # regen menu.json from the xlsx (requires openpyxl)
@@ -39,7 +39,9 @@ python scripts/convert_menu.py            # regen menu.json from the xlsx (requi
 ## Getting started (local, zero-config)
 
 ```bash
-npm install
+npm install              # root scripts + test deps (tsx, typescript, mongodb-memory-server)
+npm install --prefix frontend   # React/Vite deps
+npm install --prefix backend    # Express/tsx deps
 npm run dev:server   # API server -> http://localhost:5000 (uses .data/mealbuddy.json)
 npm run dev          # frontend     -> http://localhost:5173
 ```
@@ -49,7 +51,7 @@ back to a JSON file store (`.data/mealbuddy.json`) and still seeds the dataset
 menu + demo accounts.
 Demo accounts: `student@mealbuddy.app` / `student123` and `cook@mealbuddy.app` / `cook123`.
 
-To use **MongoDB Atlas locally**, copy `.env.example` to `.env`, set
+To use **MongoDB Atlas locally**, copy `backend/.env.example` to `backend/.env`, set
 `MONGODB_URI`, then restart the server. `MONGODB_DB=meal_buddy` is the default
 database name. No code changes are needed — the same route code backs both
 stores.
@@ -89,8 +91,8 @@ Browser (Vercel SPA)  --HTTPS /api/*-->  Express API (Render)  --MongoDB-->  Atl
 ```
 
 - **Database** — MongoDB Atlas (M0 free tier is fine). Database name: `meal_buddy`.
-- **Backend** — Render Web Service (Node), repo root `package.json`, run with tsx.
-- **Frontend** — Vercel, Vite build output in `dist/`.
+- **Backend** — Render Web Service (Node), `render.yaml` sets `rootDir: backend`, run with tsx.
+- **Frontend** — Vercel, `vercel.json` sets `rootDirectory: frontend`, Vite build output in `dist/`.
 - **Secrets** — only in Atlas/Render settings or Vercel dashboard; never in GitHub.
 
 ### 1. MongoDB Atlas setup
@@ -109,9 +111,11 @@ Browser (Vercel SPA)  --HTTPS /api/*-->  Express API (Render)  --MongoDB-->  Atl
 
 1. Push the repo to GitHub.
 2. Render dashboard → **New + → Blueprint** → select the repo. Render reads
-   `render.yaml` automatically (service `mealbuddy-api`, start command `npm start`).
+   `render.yaml` automatically (service `mealbuddy-api`, `rootDir: backend`,
+   build `npm install --include=dev && npm run build`, start `npm start`).
    Alternatively: **New + → Web Service** with these settings:
-   - **Build command:** `npm install`  *(default)*
+   - **Root directory:** `backend`
+   - **Build command:** `npm install --include=dev && npm run build`
    - **Start command:** `npm start`
    - **Health check path:** `/api/health`  ← returns `{ ok: true, dialect: "mongodb" }` when Atlas is reachable
    - **Environment variables** (all secrets as `hElp`: set one at a time):
@@ -124,7 +128,8 @@ Browser (Vercel SPA)  --HTTPS /api/*-->  Express API (Render)  --MongoDB-->  Atl
 
 1. Vercel dashboard → **Add New → Project** → import the same GitHub repo.
 2. Vercel auto-detects Vite (`vercel.json` pins `framework: vite`,
-   `buildCommand: npm run build`, `outputDirectory: dist`).
+   `rootDirectory: frontend`, `buildCommand: npm run build`,
+   `outputDirectory: dist`).
 3. **Environment variable:** `VITE_API_URL=https://mealbuddy-api.onrender.com`
    (the Render backend from step 2). Redeploy after adding it.
 4. Update the backend's `CLIENT_ORIGIN` to the final Vercel URL
@@ -145,15 +150,15 @@ After both deployments are green:
 
 | File | Purpose |
 | --- | --- |
-| `render.yaml` | Render Blueprint — backend Web Service, env mapping, health check. |
-| `vercel.json` | Vercel — Vite framework, build command, `dist/` output. |
-| `.env.example` | All required env vars (no real secrets). Copy to `.env` locally. |
-| `server/.env.example` | Server-only reference (same server vars). |
+| `render.yaml` | Render Blueprint — backend Web Service (`rootDir: backend`), env mapping, health check. |
+| `vercel.json` | Vercel — Vite framework, `rootDirectory: frontend`, build command, `dist/` output. |
+| `backend/.env.example` | Server env vars (no real secrets). Copy to `backend/.env` locally. |
+| `frontend/.env.example` | Browser (`VITE_*`) env vars (no real secrets). Copy to `frontend/.env` locally. |
 | `.gitignore` | `.env`/`.env.*` ignored; secrets never enter git. |
 
 ## Persistence
 
-- Initial menu: dataset → `src/data/menu.json`.
+- Initial menu: dataset → `shared/src/data/menu.json` (via `scripts/convert_menu.py`).
 - Runtime: Express API persists to **MongoDB Atlas** when `MONGODB_URI` is set
   (collections: `users`, `menuItems`, `foodProfiles`, `favorites`,
   `conversations`), otherwise a local JSON store at `.data/mealbuddy.json`
@@ -165,14 +170,15 @@ After both deployments are green:
 
 Requires Node 18+ (uses native `fetch` in tests).
 
-1. `npm install`
+1. `npm install` (root) + `npm install --prefix frontend` + `npm install --prefix backend`
 2. Terminal A — API server → `npm run dev:server` → http://localhost:5000
 3. Terminal B — frontend → `npm run dev` → http://localhost:5173
 4. Open **Student** to chat, **Canteen Cook** to manage the menu.
 
 Local state lives in `.data/mealbuddy.json`. To use MongoDB Atlas instead
-(production), copy `.env.example` to `.env`, set `MONGODB_URI` (and optionally
-`MONGODB_DB=meal_buddy`), then restart the server — no code changes needed.
+(production), copy `backend/.env.example` to `backend/.env`, set `MONGODB_URI`
+(and optionally `MONGODB_DB=meal_buddy`), then restart the server — no code
+changes needed.
 
 ### Tests
 
@@ -180,8 +186,7 @@ Local state lives in `.data/mealbuddy.json`. To use MongoDB Atlas instead
 npm test            # runs the whole suite: engine + live API (42 checks total)
 npm run test:engine # deterministic recommendation engine (26 checks)
 npm run test:api    # boots the real Express app and exercises auth/menu/chat/favorites (16 checks)
-npm run typecheck   # TypeScript (client + engine)
-npm run typecheck:server
+npm run typecheck   # TypeScript (frontend + backend + shared)
 ```
 
 ## Demo flow for judges

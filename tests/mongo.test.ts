@@ -3,7 +3,7 @@
 // MongoStore path is proven (not just typechecked). Run: npm run test:mongo.
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { createServer } from 'http';
-import app from '../server/src/app';
+import app from '../backend/src/app';
 
 let pass = 0;
 let fail = 0;
@@ -88,7 +88,7 @@ async function main() {
   await req(base, 'PATCH', `/api/menu/I002/availability`, { available: true }, cookToken);
 
   // 9. Persistence across "restart": rebuild stores from same mongod + verify data survived
-  const { resolveStores } = await import('../server/src/repositories');
+  const { resolveStores } = await import('../backend/src/repositories');
   const s1 = await resolveStores();
   const listAgain = await s1.menu.listMenu();
   ok('menu persists in mongo (incl. Mongo Paneer)', listAgain.some((m: any) => m.id === newId) && listAgain.length >= 17);
