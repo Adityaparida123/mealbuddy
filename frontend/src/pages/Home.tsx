@@ -1,7 +1,11 @@
-import { GraduationCap, ChefHat, ArrowRight } from 'lucide-react';
+import { GraduationCap, ChefHat, ArrowRight, LogOut } from 'lucide-react';
 import type { Page } from '../App';
+import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/common/ui';
 
 export default function Home({ onNavigate }: { onNavigate: (page: Page) => void }) {
+  const { user, status, logout } = useAuth();
+
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-4 py-12">
       <div className="text-center">
@@ -12,6 +16,20 @@ export default function Home({ onNavigate }: { onNavigate: (page: Page) => void 
         <p className="mt-2 text-base text-slate-600 sm:text-lg">
           Your AI-powered college canteen assistant
         </p>
+        {status === 'authed' && user && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-3 py-1.5 text-sm text-slate-700">
+            <span className="text-base">
+              {user.role === 'COOK' ? '👨‍🍳' : '👨‍🎓'}
+            </span>
+            Signed in as <span className="font-semibold text-brand-600">{user.name}</span>
+            <Button variant="ghost" onClick={logout} className="!px-2 !py-0.5 text-xs">
+              <LogOut size={13} /> Log out
+            </Button>
+          </div>
+        )}
+        {status === 'loading' && (
+          <p className="mt-4 text-sm text-slate-400">Checking your session…</p>
+        )}
       </div>
 
       <h2 className="mt-10 text-center text-lg font-semibold text-slate-700">

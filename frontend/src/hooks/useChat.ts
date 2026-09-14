@@ -1,12 +1,10 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ChatMessage, ChatContext, Role } from '../../../shared/src/types/chat';
-import { emptyContext } from '../../../shared/src/types/chat';
-import { getRecommendation } from '../../../shared/src/engine';
-import type { MenuItem } from '../../../shared/src/types/menu';
+﻿import { useCallback, useEffect, useState } from 'react';
+import type { ChatMessage, Role } from '../../../shared/src/types/chat';
+import { ApiError, chatApi } from '../services/api';
 import { loadChatHistory, saveChatHistory } from '../services/storage';
 
 const WELCOME =
-  "Hi! ðŸ‘‹ I'm Meal Buddy.\n\nTell me what you're craving, your budget, allergies or dietary preferences, and I'll help you find something from today's canteen menu.";
+  "Hi! 👋 I'm Meal Buddy.\n\nTell me what you're craving, your budget, allergies or dietary preferences, and I'll help you find something from today's canteen menu.";
 
 function makeId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -21,23 +19,21 @@ function createWelcomeMessage(): ChatMessage {
   };
 }
 
-// ONE place the welcome message can ever be created: only when there is no
-// existing conversation to restore. Runs once, inside a lazy initializer, so
-// React StrictMode's double-invocation cannot produce two greetings.
+// One place the welcome message can ever be created: only when there is no
+// existing conversation to restore. Runs once, inside a lazy initializer.
 function buildInitialMessages(): ChatMessage[] {
   const history = loadChatHistory<ChatMessage>();
   if (history.length > 0) return history;
   return [createWelcomeMessage()];
 }
 
-export function useChat(menu: MenuItem[]) {
+export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>(buildInitialMessages);
   const [isBusy, setIsBusy] = useState(false);
-  const contextRef = useRef<ChatContext>(emptyContext());
+  const [error, setError] = useState<string | null>(null);
 
-  // Persist whatever the conversation currently is. We never *append* here â€”
-  // this only records state that already exists, so a restored conversation is
-  // written back verbatim and a fresh one keeps its single welcome message.
+  // Chat history is a per-browser convenience (a local draft of the user's own
+  // conversation) — the source of truth for recommendations is the backend.
   useEffect(() => {
     saveChatHistory(messages);
   }, [messages]);
@@ -66,43 +62,44 @@ export function useChat(menu: MenuItem[]) {
         },
       ]);
       setIsBusy(true);
+      setError(null);
 
       try {
-        const { recommendation, prefs } = await getRecommendation(trimmed, menu, contextRef.current);
+        const reply = await chatApi.send(trimmed);
 
-        contextRef.current = {
-          cravings: prefs.cravings,
-          budget: prefs.budget,
-          diet: prefs.diet,
-          allergens: prefs.allergens,
-          dislikes: prefs.dislikes,
-          time: prefs.time,
-          mood: prefs.mood,
-          lastRecommendationId: recommendation.best?.item.id ?? null,
-          lastBestPrice: recommendation.best?.item.price ?? null,
-          lastIntents: [],
-          answered: prefs.answered,
-          lastQuestion: recommendation.clarification?.questionId ?? null,
-        };
-
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === assistantPendingId
-              ? {
-                  ...msg,
-                  role: 'assistant' as Role,
-                  content: recommendation.explanation,
-                  recommendation,
-                }
-              : msg
-          )
-        );
+        if (reply.kind === 'knowledge') {
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === assistantPendingId
+                ? { ...msg, role: 'assistant' as Role, content: reply.answer }
+                : msg
+            )
+          );
+        } else {
+          const rec = reply.recommendation;
+          const content = rec?.explanation
+            ? rec.explanation
+            : rec?.clarification
+              ? rec.clarification.text
+              : rec?.best
+                ? "Here is the best match from today's menu."
+                : "I couldn't find anything safe right now. Try adjusting your budget or preferences and ask again.";
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === assistantPendingId
+                ? { ...msg, role: 'assistant' as Role, content, recommendation: rec ?? null }
+                : msg
+            )
+          );
+        }
       } catch (err) {
-        const fallbackText = "I couldn't find anything safe right now. Try adjusting your budget or preferences and ask again.";
+        const message =
+          err instanceof ApiError ? err.message : 'Unable to connect to Meal Buddy server.';
+        setError(message);
         setMessages(prev =>
           prev.map(msg =>
             msg.id === assistantPendingId
-              ? { ...msg, role: 'assistant' as Role, content: fallbackText }
+              ? { ...msg, role: 'assistant' as Role, content: message }
               : msg
           )
         );
@@ -110,13 +107,13 @@ export function useChat(menu: MenuItem[]) {
         setIsBusy(false);
       }
     },
-    [menu, isBusy]
+    [isBusy]
   );
 
   const resetChat = useCallback(() => {
-    contextRef.current = emptyContext();
+    setError(null);
     setMessages([createWelcomeMessage()]);
   }, []);
 
-  return { messages, send, isBusy, resetChat };
+  return { messages, send, isBusy, resetChat, error };
 }
