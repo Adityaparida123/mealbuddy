@@ -9,7 +9,7 @@
     "build": "npm --prefix frontend run build",
     "build:all": "npm --prefix frontend run build && npm --prefix backend run build",
     "preview": "npm --prefix frontend run preview",
-    "test": "tsx tests/engine.test.ts && tsx tests/api.test.ts",
+    "test": "tsx tests/engine.test.ts && tsx tests/api.test.ts && tsx tests/cors.test.ts",
     "test:engine": "tsx tests/engine.test.ts",
     "test:api": "tsx tests/api.test.ts",
     "test:mongo": "tsx tests/mongo.test.ts",

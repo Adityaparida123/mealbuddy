@@ -11,12 +11,21 @@ import foodProfileRoutes from './routes/foodProfile';
 
 const app = express();
 
+// Normalize each allowlisted origin: trim whitespace, strip surrounding
+// quotes, and drop trailing slashes. The `cors` package compares origins
+// byte-for-byte, so an env value like "https://app.vercel.app/" (with a
+// trailing slash or quotes) silently fails every preflight — this makes it
+// tolerant of those classic mistakes without loosening CORS.
+const normalizeOrigin = (o: string) => o.trim().replace(/^["']+|["']+$/g, '').replace(/\/+$/, '');
 const corsOrigins = process.env.CLIENT_ORIGIN
-  ? process.env.CLIENT_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+  ? process.env.CLIENT_ORIGIN.split(',').map(normalizeOrigin).filter(Boolean)
   : true;
 
 app.use(helmet());
 app.use(cors({ origin: corsOrigins }));
+if (Array.isArray(corsOrigins)) {
+  console.log(`[mealbuddy] CORS allowlist: ${corsOrigins.map(o => JSON.stringify(o)).join(', ')}`);
+}
 app.use(express.json({ limit: '256kb' }));
 app.use(morgan('tiny'));
 
