@@ -1,0 +1,532 @@
+[
+  {
+    "id": "I001",
+    "name": "Veg Thali",
+    "price": 60,
+    "category": "Meal",
+    "ingredients": [
+      "rice",
+      "dal",
+      "sabzi",
+      "roti"
+    ],
+    "allergens": [
+      "dairy"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 10,
+    "available": true,
+    "calories": 450,
+    "mood": [
+      "comfort"
+    ],
+    "tags": [
+      "veg",
+      "comfort",
+      "meal"
+    ]
+  },
+  {
+    "id": "I002",
+    "name": "Chicken Biryani",
+    "price": 90,
+    "category": "Meal",
+    "ingredients": [
+      "chicken",
+      "rice",
+      "spices"
+    ],
+    "allergens": [],
+    "diet": [
+      "non-veg"
+    ],
+    "dietType": "non-veg",
+    "glutenFree": false,
+    "spiceLevel": "spicy",
+    "prepTime": 20,
+    "available": true,
+    "calories": 650,
+    "mood": [
+      "comfort"
+    ],
+    "tags": [
+      "non-veg",
+      "comfort",
+      "meal"
+    ]
+  },
+  {
+    "id": "I003",
+    "name": "Paneer Roll",
+    "price": 45,
+    "category": "Snack",
+    "ingredients": [
+      "paneer",
+      "roti",
+      "veggies"
+    ],
+    "allergens": [
+      "dairy",
+      "gluten"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "spicy",
+    "prepTime": 8,
+    "available": true,
+    "calories": 380,
+    "mood": [
+      "spicy"
+    ],
+    "tags": [
+      "veg",
+      "spicy",
+      "snack"
+    ]
+  },
+  {
+    "id": "I004",
+    "name": "Masala Dosa",
+    "price": 50,
+    "category": "Meal",
+    "ingredients": [
+      "rice batter",
+      "potato"
+    ],
+    "allergens": [],
+    "diet": [
+      "veg",
+      "gluten-free"
+    ],
+    "dietType": "veg",
+    "glutenFree": true,
+    "spiceLevel": "mild",
+    "prepTime": 12,
+    "available": true,
+    "calories": 400,
+    "mood": [
+      "comfort"
+    ],
+    "tags": [
+      "veg",
+      "gluten-free",
+      "comfort",
+      "meal",
+      "gluten-free"
+    ]
+  },
+  {
+    "id": "I005",
+    "name": "Fruit Salad",
+    "price": 30,
+    "category": "Snack",
+    "ingredients": [
+      "seasonal fruits"
+    ],
+    "allergens": [],
+    "diet": [
+      "vegan",
+      "gluten-free"
+    ],
+    "dietType": "vegan",
+    "glutenFree": true,
+    "spiceLevel": "mild",
+    "prepTime": 5,
+    "available": true,
+    "calories": 150,
+    "mood": [
+      "light"
+    ],
+    "tags": [
+      "vegan",
+      "gluten-free",
+      "light",
+      "snack",
+      "gluten-free"
+    ]
+  },
+  {
+    "id": "I006",
+    "name": "Veg Sandwich",
+    "price": 35,
+    "category": "Snack",
+    "ingredients": [
+      "bread",
+      "veggies",
+      "mayo"
+    ],
+    "allergens": [
+      "gluten",
+      "egg",
+      "soy"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 6,
+    "available": false,
+    "calories": 300,
+    "mood": [
+      "light"
+    ],
+    "tags": [
+      "veg",
+      "light",
+      "snack"
+    ]
+  },
+  {
+    "id": "I007",
+    "name": "Cold Coffee",
+    "price": 40,
+    "category": "Beverage",
+    "ingredients": [
+      "milk",
+      "coffee",
+      "sugar"
+    ],
+    "allergens": [
+      "dairy"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 5,
+    "available": true,
+    "calories": 200,
+    "mood": [
+      "energizing"
+    ],
+    "tags": [
+      "veg",
+      "energizing",
+      "beverage"
+    ]
+  },
+  {
+    "id": "I008",
+    "name": "Gulab Jamun",
+    "price": 25,
+    "category": "Dessert",
+    "ingredients": [
+      "khoya",
+      "sugar syrup"
+    ],
+    "allergens": [
+      "dairy",
+      "gluten"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 3,
+    "available": true,
+    "calories": 180,
+    "mood": [
+      "sweet"
+    ],
+    "tags": [
+      "veg",
+      "sweet",
+      "dessert"
+    ]
+  },
+  {
+    "id": "I009",
+    "name": "Egg Curry Rice",
+    "price": 70,
+    "category": "Meal",
+    "ingredients": [
+      "egg",
+      "rice",
+      "curry"
+    ],
+    "allergens": [
+      "egg"
+    ],
+    "diet": [
+      "non-veg"
+    ],
+    "dietType": "non-veg",
+    "glutenFree": false,
+    "spiceLevel": "spicy",
+    "prepTime": 15,
+    "available": true,
+    "calories": 480,
+    "mood": [
+      "spicy"
+    ],
+    "tags": [
+      "non-veg",
+      "spicy",
+      "meal"
+    ]
+  },
+  {
+    "id": "I010",
+    "name": "Vegan Buddha Bowl",
+    "price": 85,
+    "category": "Meal",
+    "ingredients": [
+      "quinoa",
+      "chickpeas",
+      "veggies"
+    ],
+    "allergens": [
+      "sesame"
+    ],
+    "diet": [
+      "vegan",
+      "gluten-free"
+    ],
+    "dietType": "vegan",
+    "glutenFree": true,
+    "spiceLevel": "mild",
+    "prepTime": 12,
+    "available": true,
+    "calories": 420,
+    "mood": [
+      "light"
+    ],
+    "tags": [
+      "vegan",
+      "gluten-free",
+      "light",
+      "meal",
+      "gluten-free"
+    ]
+  },
+  {
+    "id": "I011",
+    "name": "Samosa (2 pcs)",
+    "price": 20,
+    "category": "Snack",
+    "ingredients": [
+      "potato",
+      "peas",
+      "flour"
+    ],
+    "allergens": [
+      "gluten"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 4,
+    "available": true,
+    "calories": 250,
+    "mood": [
+      "comfort"
+    ],
+    "tags": [
+      "veg",
+      "comfort",
+      "snack"
+    ]
+  },
+  {
+    "id": "I012",
+    "name": "Lassi",
+    "price": 35,
+    "category": "Beverage",
+    "ingredients": [
+      "yogurt",
+      "sugar"
+    ],
+    "allergens": [
+      "dairy"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 3,
+    "available": true,
+    "calories": 220,
+    "mood": [
+      "sweet"
+    ],
+    "tags": [
+      "veg",
+      "sweet",
+      "beverage"
+    ]
+  },
+  {
+    "id": "I013",
+    "name": "Grilled Sandwich",
+    "price": 45,
+    "category": "Snack",
+    "ingredients": [
+      "bread",
+      "cheese",
+      "veggies"
+    ],
+    "allergens": [
+      "gluten",
+      "dairy",
+      "mustard"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 7,
+    "available": true,
+    "calories": 350,
+    "mood": [
+      "comfort"
+    ],
+    "tags": [
+      "veg",
+      "comfort",
+      "snack"
+    ]
+  },
+  {
+    "id": "I014",
+    "name": "Chole Bhature",
+    "price": 65,
+    "category": "Meal",
+    "ingredients": [
+      "chickpeas",
+      "fried bread"
+    ],
+    "allergens": [
+      "gluten",
+      "soy"
+    ],
+    "diet": [
+      "veg"
+    ],
+    "dietType": "veg",
+    "glutenFree": false,
+    "spiceLevel": "spicy",
+    "prepTime": 15,
+    "available": true,
+    "calories": 550,
+    "mood": [
+      "spicy"
+    ],
+    "tags": [
+      "veg",
+      "spicy",
+      "meal"
+    ]
+  },
+  {
+    "id": "I015",
+    "name": "Green Tea",
+    "price": 20,
+    "category": "Beverage",
+    "ingredients": [
+      "tea leaves",
+      "water"
+    ],
+    "allergens": [],
+    "diet": [
+      "vegan",
+      "gluten-free"
+    ],
+    "dietType": "vegan",
+    "glutenFree": true,
+    "spiceLevel": "mild",
+    "prepTime": 3,
+    "available": true,
+    "calories": 5,
+    "mood": [
+      "light"
+    ],
+    "tags": [
+      "vegan",
+      "gluten-free",
+      "light",
+      "beverage",
+      "gluten-free"
+    ]
+  },
+  {
+    "id": "I016",
+    "name": "Prawn Fry",
+    "price": 95,
+    "category": "Snack",
+    "ingredients": [
+      "prawns",
+      "spices"
+    ],
+    "allergens": [
+      "shellfish"
+    ],
+    "diet": [
+      "non-veg"
+    ],
+    "dietType": "non-veg",
+    "glutenFree": false,
+    "spiceLevel": "spicy",
+    "prepTime": 15,
+    "available": true,
+    "calories": 320,
+    "mood": [
+      "spicy"
+    ],
+    "tags": [
+      "non-veg",
+      "spicy",
+      "snack"
+    ]
+  },
+  {
+    "id": "I017",
+    "name": "Peanut Chikki",
+    "price": 20,
+    "category": "Dessert",
+    "ingredients": [
+      "peanuts",
+      "jaggery"
+    ],
+    "allergens": [
+      "nuts"
+    ],
+    "diet": [
+      "vegan"
+    ],
+    "dietType": "vegan",
+    "glutenFree": false,
+    "spiceLevel": "mild",
+    "prepTime": 3,
+    "available": true,
+    "calories": 210,
+    "mood": [
+      "sweet"
+    ],
+    "tags": [
+      "vegan",
+      "sweet",
+      "dessert"
+    ]
+  }
+]

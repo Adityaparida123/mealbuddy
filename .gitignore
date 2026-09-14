@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+server/dist
+
+# Environment files (never commit real credentials)
+.env
+.env.*
+!.env.example
+!server/.env.example
+*.local
+
+# Local data / logs
+.data
+*.log
+tsconfig.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,53 @@
+{
+  "name": "meal-buddy",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+"scripts": {
+    "dev": "vite",
+    "dev:server": "tsx server/src/index.ts",
+    "build": "tsc -b && vite build && tsc -p server/tsconfig.json --noEmit",
+    "build:server": "tsc -p server/tsconfig.json --noEmit",
+    "start": "tsx server/src/index.ts",
+    "preview": "vite preview",
+    "test": "tsx tests/engine.test.ts && tsx tests/api.test.ts",
+    "test:engine": "tsx tests/engine.test.ts",
+    "test:api": "tsx tests/api.test.ts",
+    "test:mongo": "tsx tests/mongo.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:server": "tsc -p server/tsconfig.json --noEmit",
+    "data:convert": "python scripts/convert_menu.py"
+  },
+  "dependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.454.0",
+    "mongodb": "^7.6.0",
+    "morgan": "^1.12.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "mongodb-memory-server": "^11.2.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "tsx": "^4.23.13",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

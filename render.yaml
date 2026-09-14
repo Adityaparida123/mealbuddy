@@ -1,0 +1,37 @@
+# Render Blueprint — Meal Buddy backend (Express + MongoDB Atlas)
+# Docs: https://render.com/docs/blueprint-spec
+# Deploy by pushing this repo to GitHub and creating a "Blueprint" in Render,
+# or import this file via the Render dashboard (New + -> Blueprint).
+#
+# The backend is a plain Node/Express service running TypeScript through tsx
+# (see package.json `start`). No separate build step is required; Render runs
+# `npm install` (installs devDependencies incl. tsx) and then `npm start`.
+services:
+  - type: web
+    name: mealbuddy-api
+    runtime: node
+    plan: free
+    rootDir: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      # Server-side only — set real values in Render dashboard as a Secret File
+      # or Environment Group. NEVER commit real credentials.
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        sync: false
+        value: meal_buddy
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        sync: false
+        value: gemini
+      # Comma-separated allowed origins for CORS -> your Vercel frontend URL.
+      - key: CLIENT_ORIGIN
+        sync: false

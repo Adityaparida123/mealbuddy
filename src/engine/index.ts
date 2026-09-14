@@ -1,0 +1,13 @@
+export { getRecommendation, type EngineResult } from './recommendationEngine';
+export { extractUserPreferences, classifyIntent, type ExtractedPrefs, type ChatIntent } from './intent';
+export { allergyFilter, hasAllergyConflict, itemAllergenTokens, itemAllergenStatus, normalizeAllergen, ALLERGEN_PATTERNS, DEFAULT_ALLERGIES, ALLERGY_LABELS } from './allergyFilter';
+export { availabilityFilter } from './availabilityFilter';
+export { dietFilter } from './dietFilter';
+export { budgetFilter, itemsWithinBudget } from './budgetFilter';
+export { timeFilter } from './timeFilter';
+export { dislikeFilter, matchesDislike } from './dislikeFilter';
+export { preferenceMatcher, matchesFoodQuery, exactFoodMatch, categoryFoodMatch, matchItemTag } from './preferenceMatcher';
+export { computeMatchScore, computeMatchResult, rankCandidates, categoryPoolFromQuery, buildMatchResult, WEIGHTS, type ScoreDetail } from './matchScore';
+export { decideClarification, RECOMMEND_THRESHOLD } from './clarifier';
+export { setPipelineDebug, logStage } from './debug';
+export type { Clarification, ClarificationOption, QuestionId } from '../types/recommendation';
