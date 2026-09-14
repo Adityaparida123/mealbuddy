@@ -1,4 +1,4 @@
-﻿import type { ChatMessage as ChatMessageType } from '../../../../shared/src/types/chat';
+import type { ChatMessage as ChatMessageType } from '../../../../shared/src/types/chat';
 import { RecommendationCard } from '../recommendation/RecommendationCard';
 import { AlternativeCard } from '../recommendation/AlternativeCard';
 import { AlertTriangle } from 'lucide-react';
@@ -31,7 +31,7 @@ export function ChatMessage({
     <div className="flex flex-col gap-2">
       <div className="flex items-start gap-2">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-base">
-          ðŸ±
+          🍱
         </div>
         <div className="max-w-[92%]">
           {message.content === '...' ? (
@@ -41,7 +41,7 @@ export function ChatMessage({
                 <span className="h-2 w-2 animate-bounce rounded-full bg-brand-300 [animation-delay:120ms]" />
                 <span className="h-2 w-2 animate-bounce rounded-full bg-brand-300 [animation-delay:240ms]" />
               </span>
-              Meal Buddy is thinkingâ€¦
+              Meal Buddy is thinking…
             </div>
           ) : (
             <div className="rounded-2xl rounded-bl-sm bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
@@ -66,7 +66,7 @@ export function ChatMessage({
               <AlertTriangle size={15} className="mt-0.5 shrink-0" />
               <span>
                 <strong>{rec.budgetRescue.desired.name}</strong> is{' '}
-                {rec.budgetRescue.desired.price} that's over your budget â€” so it's not
+                {rec.budgetRescue.desired.price} that's over your budget — so it's not
                 recommended, but here are safe options that fit:
               </span>
             </div>
@@ -89,7 +89,7 @@ export function ChatMessage({
 
       {rec && !rec.best && !rec.clarification && (
         <div className="ml-10 flex items-start gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 shadow-sm">
-          <span className="text-base">ðŸ˜…</span>
+          <span className="text-base">😅</span>
           <span>{rec.explanation}</span>
         </div>
       )}

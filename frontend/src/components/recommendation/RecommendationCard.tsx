@@ -1,4 +1,4 @@
-﻿import { Check, Clock, Leaf, Flame, ShieldCheck, X } from 'lucide-react';
+import { Check, Clock, Leaf, Flame, ShieldCheck, X } from 'lucide-react';
 import type { MatchResult } from '../../../../shared/src/types/recommendation';
 import { formatMoney, formatTime } from '../../utils/format';
 import { Badge } from '../common/ui';
@@ -12,7 +12,7 @@ export function RecommendationCard({ result }: { result: MatchResult }) {
       <div className="border-b border-slate-100 bg-brand-50 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-bold uppercase tracking-wide text-brand-600">
-            ðŸ† Best match
+            🏆 Best match
           </span>
           {item.available && (
             <Badge tone="green">

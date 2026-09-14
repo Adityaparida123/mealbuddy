@@ -85,8 +85,9 @@ function extractBudget(lower: string): number | null {
   const patterns: RegExp[] = [
     new RegExp(`(?:under|below|less than|at most|at max|max(?:imum)?|within|around|about)\\s*(?:of\\s+)?(?:₹|rs\\.?|inr)?\\s*${digits}${notTime}`, 'i'),
     new RegExp(`(?:under|below|less than|at most|within|around|about)\\s*(?:of\\s+)?${digits}\\s*(?:₹|rs\\.?|rupees|inr)`, 'i'),
+    new RegExp(`(?:my\\s+)?budget(?:\\s+(?:is|of|at))?\\s*(?:₹|rs\\.?|inr)?\\s*${digits}${notTime}`, 'i'),
     new RegExp(`(?:₹|rs\\.?|inr)\\s*${digits}${notTime}`, 'i'),
-    new RegExp(`(?:only|have|budget(?:\\s+of)?|spend|limit|keep it)\\s*(?:₹|rs\\.?|inr)?\\s*${digits}${notTime}`, 'i'),
+    new RegExp(`(?:only|have|spend|limit|keep it)\\s*(?:₹|rs\\.?|inr)?\\s*${digits}${notTime}`, 'i'),
     new RegExp(`${digits}\\s*(?:₹|rs\\.?|rupees)`, 'i'),
   ];
   for (const re of patterns) {
@@ -442,7 +443,7 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
   if (time != null) answered.push('time');
 
   // A short, content-free "skip" answer (e.g. "Any", "Everything's fine")
-  const skipOnly = /^(?:any|anything|any one|anybody|whatever|skip|no idea|no preference|none|nothing specific|nothing special|don'?t care|do not care|i'?m fine|i'?m easy|i'?m not picky|no constraints|no restrictions|no allergies?|no diet(?:ary)? preference|no budget|no time limit)\s*[.!]*$/i;
+  const skipOnly = /^(?:any|anything|any one|anybody|whatever|skip|no idea|no preference|none|nothing specific|nothing special|don'?t care|do not care|i'?m fine|i'?m easy|i'?m not picky|no constraints|no restrictions|no limit|no allergies?|no diet(?:ary)? preference|no budget|no budget limit|no time limit)\s*[.!]*$/i;
   if (skipOnly.test(lowerMessage.trim())) {
     if (context?.lastQuestion) answered.push(context.lastQuestion);
     else answered.push('craving', 'budget', 'diet', 'allergy', 'time');

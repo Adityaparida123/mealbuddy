@@ -1,7 +1,7 @@
 ﻿import { useCallback, useEffect, useState } from 'react';
 import type { ChatMessage, Role } from '../../../shared/src/types/chat';
-import { ApiError, chatApi } from '../services/api';
-import { loadChatHistory, saveChatHistory } from '../services/storage';
+import { ApiError, chatApi, type ChatState } from '../services/api';
+import { loadChatHistory, loadChatState, saveChatHistory, saveChatState } from '../services/storage';
 
 const WELCOME =
   "Hi! 👋 I'm Meal Buddy.\n\nTell me what you're craving, your budget, allergies or dietary preferences, and I'll help you find something from today's canteen menu.";
@@ -31,12 +31,19 @@ export function useChat() {
   const [messages, setMessages] = useState<ChatMessage[]>(buildInitialMessages);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Conversation state (craving/budget/allergies/answered…) is stored per-browser
+  // and sent with every request so a reload never resets the bot's memory.
+  const [state, setState] = useState<ChatState | null>(() => loadChatState<ChatState>());
 
   // Chat history is a per-browser convenience (a local draft of the user's own
   // conversation) — the source of truth for recommendations is the backend.
   useEffect(() => {
     saveChatHistory(messages);
   }, [messages]);
+
+  useEffect(() => {
+    saveChatState(state);
+  }, [state]);
 
   const send = useCallback(
     async (text: string) => {
@@ -65,9 +72,10 @@ export function useChat() {
       setError(null);
 
       try {
-        const reply = await chatApi.send(trimmed);
+        const reply = await chatApi.send(trimmed, [], state ?? undefined);
 
         if (reply.kind === 'knowledge') {
+          setState(reply.context);
           setMessages(prev =>
             prev.map(msg =>
               msg.id === assistantPendingId
@@ -76,6 +84,7 @@ export function useChat() {
             )
           );
         } else {
+          setState(reply.context);
           const rec = reply.recommendation;
           const content = rec?.explanation
             ? rec.explanation
@@ -112,8 +121,9 @@ export function useChat() {
 
   const resetChat = useCallback(() => {
     setError(null);
+    setState(null);
     setMessages([createWelcomeMessage()]);
   }, []);
 
-  return { messages, send, isBusy, resetChat, error };
+  return { messages, send, isBusy, resetChat, error, state };
 }

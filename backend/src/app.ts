@@ -26,6 +26,14 @@ app.use(cors({ origin: corsOrigins }));
 if (Array.isArray(corsOrigins)) {
   console.log(`[mealbuddy] CORS allowlist: ${corsOrigins.map(o => JSON.stringify(o)).join(', ')}`);
 }
+
+// Guarantee UTF-8 on every response (res.json already sets charset=utf-8;
+// this keeps it explicit through proxies and for all error paths).
+app.use((_req, res, next) => {
+  res.set('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
 app.use(express.json({ limit: '256kb' }));
 app.use(morgan('tiny'));
 

@@ -1,5 +1,6 @@
 import type { MenuItem } from '../../../shared/src/types/menu';
 import type { Recommendation } from '../../../shared/src/types/recommendation';
+import type { ChatContext } from '../../../shared/src/types/chat';
 
 // ---------------------------------------------------------------------------
 // Centralized Meal Buddy API client.
@@ -171,9 +172,12 @@ export interface ChatHistoryEntry {
   content: string;
 }
 
+/** Single conversation state model shared between frontend and backend. */
+export type ChatState = ChatContext;
+
 export type ChatReply =
-  | { kind: 'knowledge'; answer: string; recommendation: null; aiUsed: boolean }
-  | { kind: 'menu'; recommendation: Recommendation; aiUsed: boolean };
+  | { kind: 'knowledge'; answer: string; recommendation: null; aiUsed: boolean; context: ChatState }
+  | { kind: 'menu'; recommendation: Recommendation; aiUsed: boolean; context: ChatState };
 
 // ---------------------------------------------------------------------------
 // Endpoint methods — the ONLY place paths are defined
@@ -219,10 +223,10 @@ export const menuApi = {
 };
 
 export const chatApi = {
-  send: (message: string, history: ChatHistoryEntry[] = []) =>
+  send: (message: string, history: ChatHistoryEntry[] = [], context?: Partial<ChatState>) =>
     apiRequest<ChatReply>('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, context }),
     }),
 };
 

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { MenuItem } from '../../../../shared/src/types/menu';
 import { Button } from '../common/ui';
 import { X } from 'lucide-react';
@@ -81,7 +81,7 @@ export function MenuForm({
           <input className={input} value={category} onChange={e => setCategory(e.target.value)} placeholder="Snack" />
         </label>
         <label>
-          <span className={label}>Price (â‚¹) *</span>
+          <span className={label}>Price (₹) *</span>
           <input className={input} type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="45" />
         </label>
         <label>
@@ -104,7 +104,7 @@ export function MenuForm({
         <label>
           <span className={label}>Diet type</span>
           <select className={input} value={dietType} onChange={e => setDietType(e.target.value)}>
-            <option value="">â€” select â€”</option>
+            <option value="">— select —</option>
             <option value="veg">Veg</option>
             <option value="vegan">Vegan</option>
             <option value="non-veg">Non-veg</option>

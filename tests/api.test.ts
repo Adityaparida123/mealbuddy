@@ -92,6 +92,32 @@ async function main() {
   const r = (rescueChat.data as any).recommendation;
   ok('engine chat -> budget rescue desired Chicken Biryani', rescueChat.status === 200 && r?.budgetRescue?.desired?.name === 'Chicken Biryani' && r?.budgetRescue?.overBudget === 20);
 
+  // --- conversation state round-trips over HTTP (the loop fix) ---
+  const turn1 = await req('POST', '/api/chat', { message: "I'm craving something spicy" }, studentToken);
+  const t1q = (turn1.data as any).recommendation?.clarification?.questionId ?? null;
+  ok('chat turn 1 -> asks budget + returns context', turn1.status === 200 && t1q === 'budget' && Boolean((turn1.data as any).context));
+
+  const turn2 = await req('POST', '/api/chat', { message: 'I only have ₹50', context: (turn1.data as any).context }, studentToken);
+  const t2 = (turn2.data as any).recommendation;
+  ok(
+    'chat turn 2 -> state held, no re-ask, narrows to Paneer Roll',
+    turn2.status === 200 && (t2?.clarification ?? null) === null && t2?.best?.item?.name === 'Paneer Roll'
+  );
+
+  // Reload loses nothing: history-only clients still rebuild state.
+  const turn1b = await req('POST', '/api/chat', { message: "I'm craving something spicy" }, studentToken);
+  const historyReplay = await req('POST', '/api/chat', {
+    message: 'I only have ₹50',
+    history: [
+      { role: 'user', content: "I'm craving something spicy" },
+      { role: 'assistant', content: "What's your budget?" },
+    ],
+  }, studentToken);
+  ok(
+    'history-only replay -> same narrowing (context fallback)',
+    historyReplay.status === 200 && (historyReplay.data as any).recommendation?.best?.item?.name === 'Paneer Roll'
+  );
+
   // --- favorites + food profile ---
   await req('POST', '/api/favorites/I002', undefined, studentToken);
   const favs = await req('GET', '/api/favorites', undefined, studentToken);

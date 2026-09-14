@@ -1,4 +1,4 @@
-﻿import type { MenuItem } from '../types/menu';
+import type { MenuItem } from '../types/menu';
 import type { ChatContext } from '../types/chat';
 import type { Clarification, ClarificationOption, QuestionId } from '../types/recommendation';
 import type { ExtractedPrefs } from './intent';
@@ -67,10 +67,10 @@ function eliminationAllergy(arr: MenuItem[]): number {
 
 function buildCravingQuestion(prefs: ExtractedPrefs, justLearned: string[]): Clarification {
   let text = 'What are you craving?';
-  if (justLearned.includes('allergy')) text = "No problem â€” I've ruled out anything with a listed conflict. What are you craving?";
-  else if (justLearned.includes('budget')) text = 'Noted â€” staying within your budget. What are you craving?';
+  if (justLearned.includes('allergy')) text = "No problem — I've ruled out anything with a listed conflict. What are you craving?";
+  else if (justLearned.includes('budget')) text = 'Noted — staying within your budget. What are you craving?';
   else if (justLearned.includes('diet')) text = 'Got it. What are you craving?';
-  else if (justLearned.includes('time')) text = "Got it â€” I'll keep it quick. What are you craving?";
+  else if (justLearned.includes('time')) text = "Got it — I'll keep it quick. What are you craving?";
 
   return {
     questionId: 'craving',
@@ -94,9 +94,9 @@ function buildQuestion(questionId: QuestionId, prefs: ExtractedPrefs): Clarifica
         questionId,
         text: "What's your budget?",
         options: [
-          option('â‚¹50', 'I only have â‚¹50'),
-          option('â‚¹100', 'I only have â‚¹100'),
-          option('â‚¹150', 'I only have â‚¹150'),
+          option('₹50', 'I only have ₹50'),
+          option('₹100', 'I only have ₹100'),
+          option('₹150', 'I only have ₹150'),
           option('No limit', 'No budget limit'),
         ],
       };
@@ -138,7 +138,7 @@ function buildQuestion(questionId: QuestionId, prefs: ExtractedPrefs): Clarifica
 
 /**
  * Adaptive follow-up. Asks at most ONE question, only when it actually helps
- * shrink the pool â€” never a rigid questionnaire. Allergy is asked before the
+ * shrink the pool — never a rigid questionnaire. Allergy is asked before the
  * final recommendation because it is a hard safety constraint.
  */
 export function decideClarification(
@@ -180,11 +180,11 @@ export function decideClarification(
   if (context.diet == null && prefs.diet != null) justLearned.push('diet');
   if (context.time == null && prefs.time != null) justLearned.push('time');
 
-  // Natural ladder in fixed order: craving â†’ budget â†’ diet â†’ time â†’ allergy.
+  // Natural ladder in fixed order: craving → budget → diet → time → allergy.
   // Budget and diet are the natural next steps whenever they are still unknown
   // (budget also commonly needs a rescue); time and allergy are only asked when
   // they would meaningfully narrow the pool. The pool-size gate above already
-  // returns null (â†’ recommend) once only a few items survive, so we never
+  // returns null (→ recommend) once only a few items survive, so we never
   // over-question.
   const ladder: { id: QuestionId; unknown: boolean; helps: boolean }[] = [
     { id: 'budget', unknown: prefs.budget == null, helps: true },

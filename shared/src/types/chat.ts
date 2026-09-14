@@ -10,6 +10,16 @@ export interface ChatMessage {
   timestamp: number;
 }
 
+export type ConversationIntent = 'food_recommendation' | 'menu_query' | 'general' | 'greeting';
+
+/**
+ * Single source of truth for the current chat conversation's state. It is
+ * accumulated on every turn: the client merges the backend's returned state
+ * with the user's new message (see backend/src/routes/chat.ts), and the same
+ * state is sent back on the next request. This is what lets the chatbot
+ * remember "craving = spicy" while the user answers "budget = 150" — it never
+ * re-asks for information already captured.
+ */
 export interface ChatContext {
   cravings: string[];
   budget: number | null;
@@ -23,6 +33,8 @@ export interface ChatContext {
   lastIntents: string[];
   answered: string[];
   lastQuestion: string | null;
+  availability: boolean;
+  conversationIntent: ConversationIntent | null;
 }
 
 export const emptyContext = (): ChatContext => ({
@@ -38,4 +50,6 @@ export const emptyContext = (): ChatContext => ({
   lastIntents: [],
   answered: [],
   lastQuestion: null,
+  availability: false,
+  conversationIntent: null,
 });
