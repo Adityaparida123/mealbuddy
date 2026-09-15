@@ -61,4 +61,14 @@ app.use((req, res, _next) => {
   res.status(404).json({ error: 'Not found.' });
 });
 
+// Global error middleware: a throw/rejection must still yield an HTTP response.
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (res.headersSent) {
+    _next(err);
+    return;
+  }
+  console.error('[mealbuddy] unhandled error', err);
+  res.status(500).json({ error: 'Something went wrong on the server.' });
+});
+
 export default app;

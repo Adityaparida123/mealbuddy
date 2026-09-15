@@ -50,6 +50,7 @@ export async function getMongoDb(): Promise<Db | null> {
   client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 8000,
     connectTimeoutMS: 8000,
+    socketTimeoutMS: 10000,
   });
   try {
     await client.connect();

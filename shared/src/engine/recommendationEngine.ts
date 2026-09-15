@@ -94,7 +94,7 @@ function simpleResult(explanation: string, prefs: ExtractedPrefs): EngineResult 
 
 function greetingResult(prefs: ExtractedPrefs): EngineResult {
   return simpleResult(
-    "Hey! 👋 What are you in the mood for today?",
+    "Hi! 👋 What are you in the mood for today?",
     prefs
   );
 }

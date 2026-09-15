@@ -37,6 +37,7 @@ export class ApiError extends Error {
 }
 
 const NETWORK_TEXT = 'Unable to connect to Meal Buddy server.';
+const TIMEOUT_TEXT = 'Meal Buddy took too long to respond. Please try again.';
 const SESSION_TEXT = 'Your session has expired. Please log in again.';
 const FORBIDDEN_TEXT = "You don't have permission to perform this action.";
 const NOT_FOUND_TEXT = 'Requested resource was not found.';
@@ -80,7 +81,7 @@ export function setAuthTokenGetter(getter: () => string | null): void {
   tokenGetter = getter;
 }
 
-async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiRequest<T>(path: string, options: RequestInit = {}, timeoutMs = 30000): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) ?? {}),
@@ -88,11 +89,20 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
   const token = tokenGetter();
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const signal = options.signal ? chainSignals(options.signal, controller.signal) : controller.signal;
+
   let res: Response;
   try {
-    res = await fetch(apiUrl(path), { ...options, headers });
-  } catch {
+    res = await fetch(apiUrl(path), { ...options, headers, signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError(0, TIMEOUT_TEXT);
+    }
     throw new ApiError(0, NETWORK_TEXT);
+  } finally {
+    clearTimeout(timer);
   }
 
   if (res.status === 204) return undefined as T;
@@ -112,6 +122,17 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
     );
   }
   return body as T;
+}
+
+function chainSignals(a: AbortSignal, b: AbortSignal): AbortSignal {
+  const controller = new AbortController();
+  const forward = () => controller.abort();
+  if (a.aborted || b.aborted) controller.abort();
+  else {
+    a.addEventListener('abort', () => { forward(); a.removeEventListener('abort', forward); b.removeEventListener('abort', forward); });
+    b.addEventListener('abort', () => { forward(); a.removeEventListener('abort', forward); b.removeEventListener('abort', forward); });
+  }
+  return controller.signal;
 }
 
 // ---------------------------------------------------------------------------

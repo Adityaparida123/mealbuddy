@@ -1,6 +1,12 @@
 import type { AIProvider, AIRequest, AIResponse } from './provider';
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
+const DEFAULT_TIMEOUT_MS = 8000;
+
+function resolveAITimeoutMs(): number {
+  const raw = Number(process.env.AI_TIMEOUT_MS);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+}
 
 export class GeminiProvider implements AIProvider {
   readonly name = 'gemini';
@@ -18,6 +24,9 @@ export class GeminiProvider implements AIProvider {
 
   async recommend(req: AIRequest): Promise<AIResponse> {
     if (!this.apiKey) return { rankedIds: [], live: false };
+    const controller = new AbortController();
+    const timeoutMs = resolveAITimeoutMs();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const payload = {
         contents: [{
@@ -27,7 +36,7 @@ export class GeminiProvider implements AIProvider {
       };
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${encodeURIComponent(this.apiKey)}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) },
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal },
       );
       if (!res.ok) return { rankedIds: [], live: false };
       const data = (await res.json()) as {
@@ -36,8 +45,12 @@ export class GeminiProvider implements AIProvider {
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
       const parsed = this.parse(text, req.menu.map(i => i.id));
       return { ...parsed, live: true };
-    } catch {
+    } catch (err) {
+      const timedOut = err instanceof Error && err.name === 'AbortError';
+      if (timedOut) console.warn(`[ai] gemini recommend timed out after ${timeoutMs}ms — keeping deterministic engine order`);
       return { rankedIds: [], live: false };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
