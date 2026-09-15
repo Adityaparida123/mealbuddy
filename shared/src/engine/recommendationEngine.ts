@@ -147,7 +147,7 @@ function describeRequestedState(label: string, menu: MenuItem[], prefs: Extracte
 
 function makeNoMatch(explanation: string, prefs: ExtractedPrefs, appliedBudget: number | null, appliedTime: number | null): EngineResult {
   return {
-    recommendation: { best: null, alternatives: [], explanation, aiUsed: false },
+    recommendation: { best: null, alternatives: [], explanation, aiUsed: false, noSafeMatch: true },
     prefs,
     appliedBudget,
     appliedTime,
@@ -279,6 +279,7 @@ async function recommend(
           explanation: msg,
           aiUsed: false,
           budgetRescue,
+          noSafeMatch: true,
         },
         prefs,
         appliedBudget,

@@ -4,7 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { getStores } from '../lib/resolvers';
 import { getRecommendation, extractUserPreferences, type ExtractedPrefs } from '../../../shared/src/engine';
 import { emptyContext, type ChatContext, type ConversationIntent } from '../../../shared/src/types/chat';
-import { gateRag } from '../services/rag/knowledge';
+import { gateRag, isExplicitKnowledgeQuestion } from '../services/rag/knowledge';
 import { getAIProvider } from '../services/ai';
 
 const router = Router();
@@ -122,23 +122,40 @@ router.post('/', requireAuth, async (req, res) => {
     console.log('[CHAT] state merged');
     console.log(`[CHAT] intent extracted = ${prefs.intent}`);
 
-    // ── Fast path: greeting / general conversation ──
-    // These never touch menu stores, never load the menu, never call AI.
-    // Logs stop here for these intents.
-    if (prefs.isGreeting || prefs.isGeneralConversation) {
+    // ── Fast path 1: greeting ──
+    // A pure greeting never touches stores/menu/AI (hang safety).
+    if (prefs.isGreeting) {
       const engine = await getRecommendation(message, [], context);
       const reply = engine.recommendation ?? { best: null, alternatives: [], explanation: '', aiUsed: false };
       const nextContext = buildContext(engine.prefs, context, null);
-      console.log(`[CHAT] response sent (${prefs.intent} fast-path, ${Date.now() - startMs}ms)`);
+      console.log(`[CHAT] response sent (greeting fast-path, ${Date.now() - startMs}ms)`);
       res.json({ kind: 'menu', recommendation: reply, aiUsed: false, context: nextContext });
       return;
     }
 
-    // ── Deterministic RAG knowledge gate (no menu needed) ──
-    const rag = gateRag(message);
-    if (rag.kind === 'knowledge' && rag.answer) {
-      console.log('[CHAT] response sent (knowledge)');
-      res.json({ kind: 'knowledge', answer: rag.answer, recommendation: null, aiUsed: false, context });
+    // ── Fast path 2: deterministic RAG knowledge gate (no menu needed) ──
+    // Only EXPLICIT knowledge questions are routed here. Preference fragments
+    // and food continuations ("I have 10 minutes", "₹100", "vegetarian",
+    // "no dairy") must never be answered by the knowledge gate — they are
+    // answers to a pending food question and belong to the menu engine below.
+    // RAG runs before general conversation (priority list), but before any
+    // store/menu/AI work so it can never hang.
+    if (isExplicitKnowledgeQuestion(message)) {
+      const rag = gateRag(message);
+      if (rag.kind === 'knowledge' && rag.answer) {
+        console.log('[CHAT] response sent (knowledge)');
+        res.json({ kind: 'knowledge', answer: rag.answer, recommendation: null, aiUsed: false, context });
+        return;
+      }
+    }
+
+    // ── Fast path 3: general conversation ──
+    if (prefs.isGeneralConversation) {
+      const engine = await getRecommendation(message, [], context);
+      const reply = engine.recommendation ?? { best: null, alternatives: [], explanation: '', aiUsed: false };
+      const nextContext = buildContext(engine.prefs, context, null);
+      console.log(`[CHAT] response sent (general fast-path, ${Date.now() - startMs}ms)`);
+      res.json({ kind: 'menu', recommendation: reply, aiUsed: false, context: nextContext });
       return;
     }
 

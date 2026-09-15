@@ -41,10 +41,36 @@ export const KNOWLEDGE: KnowledgeRow[] = [
   },
 ];
 
+// Word-boundary keyword matching. A keyword must start a word (a word is broken
+// only by non-word characters), so the allergy keyword "nut" NEVER matches the
+// word "minutes" — that false positive used to hijack "I have 10 minutes" into
+// the allergen knowledge answer. Suffixes are allowed ("hour" -> "hours",
+// "allerg" -> "allergens", "pay" -> "payment").
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function keywordRegex(kw: string): RegExp {
+  const tokens = kw.split(/\s+/).filter(Boolean);
+  if (tokens.length === 1) {
+    return new RegExp(`\\b${escapeRe(tokens[0])}\\w*\\b`, 'i');
+  }
+  return new RegExp(
+    tokens
+      .map((t, i) => (i === tokens.length - 1 ? `\\b${escapeRe(t)}\\w*\\b` : `\\b${escapeRe(t)}\\b`))
+      .join('\\s+'),
+    'i'
+  );
+}
+
 export function answerKnowledge(query: string): string | null {
   const q = query.toLowerCase();
   const hits = KNOWLEDGE
-    .map(r => ({ r, score: r.keywords.filter(k => q.includes(k)).length }))
+    .map(r => ({
+      r,
+      score: r.keywords.reduce((n, kw) => {
+        const m = q.match(new RegExp(keywordRegex(kw).source, 'gi'));
+        return n + (m ? m.length : 0);
+      }, 0),
+    }))
     .filter(h => h.score > 0)
     .sort((a, b) => b.score - a.score);
   if (hits.length === 0) return null;
@@ -60,4 +86,26 @@ export function gateRag(query: string): RagOutcome {
   const k = answerKnowledge(query);
   if (k) return { kind: 'knowledge', answer: k };
   return { kind: 'none' };
+}
+
+const INTERROGATIVE_RE =
+  /^(what|whats|which|when|where|why|how|who|whose|is|are|can|could|does|do|will|would|should|was|were)\b|(\?$|\?)|\bhow\s+(do|can|does)\s+|(what|when|where|how|which)\s+(is|are|was|were|do|does|have|can)\b|do you (have|accept|take|list)|tell me (about|the)|i want to know|can you (tell|help|list|share)/i;
+
+/**
+ * A knowledge question is an EXPLICIT interrogative that also hits the
+ * knowledge base. It must be a real question, never a preference fragment:
+ *   "What allergens are in today's menu?"  -> true  (RAG)
+ *   "How do I avoid dairy?"                 -> true  (RAG)
+ *   "when does lunch start?"                -> true  (RAG)
+ *   "I have 10 minutes"                     -> false (food continuation)
+ *   "₹100" / "vegetarian" / "no dairy"      -> false (food continuation)
+ * This is what keeps active food conversations routing to the menu engine —
+ * a craving/budget/time/allergy answer to a pending question must NEVER be
+ * swallowed by the knowledge gate.
+ */
+export function isExplicitKnowledgeQuestion(query: string): boolean {
+  const lower = query.toLowerCase().trim();
+  if (!lower) return false;
+  if (!INTERROGATIVE_RE.test(lower)) return false;
+  return answerKnowledge(query) !== null;
 }

@@ -86,13 +86,15 @@ export function useChat() {
         } else {
           setState(reply.context);
           const rec = reply.recommendation;
-          const content = rec?.explanation
-            ? rec.explanation
-            : rec?.clarification
-              ? rec.clarification.text
-              : rec?.best
-                ? "Here is the best match from today's menu."
-                : "I couldn't find anything safe right now. Try adjusting your budget or preferences and ask again.";
+          const content = rec?.noSafeMatch
+            ? "I couldn't find anything safe right now. See details below."
+            : rec?.explanation
+              ? rec.explanation
+              : rec?.clarification
+                ? rec.clarification.text
+                : rec?.best
+                  ? "Here is the best match from today's menu."
+                  : "I couldn't find anything safe right now. Try adjusting your budget or preferences and ask again.";
           setMessages(prev =>
             prev.map(msg =>
               msg.id === assistantPendingId

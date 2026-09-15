@@ -87,7 +87,7 @@ export function ChatMessage({
         </div>
       )}
 
-      {rec && !rec.best && !rec.clarification && (
+      {rec && rec.noSafeMatch === true && (
         <div className="ml-10 flex items-start gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-600 shadow-sm">
           <span className="text-base">😅</span>
           <span>{rec.explanation}</span>
