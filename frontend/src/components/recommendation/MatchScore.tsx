@@ -7,7 +7,7 @@ export function MatchScore({ score, reasons }: { score: number; reasons?: MatchR
     <div className="mt-2">
       <div className="flex items-center justify-between text-xs text-slate-500">
         <span className="flex items-center gap-1">
-          <span className="text-amber-500">â˜…</span> Match
+          <span className="text-amber-500">★</span> Match
         </span>
         <span className="font-semibold text-slate-700">{score}%</span>
       </div>
