@@ -1,6 +1,6 @@
 import type { MenuItem } from '../types/menu';
 import type { ExtractedPrefs } from './intent';
-import { tokensOf, eqToken } from './intent';
+import { tokensOf, eqToken, isAttributeWord } from './intent';
 
 function norm(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -157,7 +157,13 @@ export function preferenceMatcher(item: MenuItem, prefs: ExtractedPrefs): Prefer
   const exactMatched = exactFoodMatch(item, prefs.foodQuery);
   const cravingTokens = prefs.cravings.filter(c => matchItemTag(item, c));
   const moodTokens = prefs.mood.filter(m => matchItemTag(item, m));
-  const tagTokens = new Set([...prefs.cravings, ...prefs.mood]);
+  // Only dictionary attributes (taste/mood, e.g. "spicy", "comfort") count
+  // toward the tag-match ratio. Real food words ("paneer", "noodles") ride in
+  // `cravings` for state purposes but are matched via the food-query path, so
+  // they must not dilute the semantic tag score.
+  const tagTokens = new Set(
+    [...prefs.cravings, ...prefs.mood].filter(t => isAttributeWord(String(t)))
+  );
   let matchedTags = 0;
   let totalTags = 0;
   for (const token of tagTokens) {

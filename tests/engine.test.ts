@@ -1,4 +1,4 @@
-import { getRecommendation } from '../shared/src/engine';
+import { getRecommendation, extractUserPreferences } from '../shared/src/engine';
 import { emptyContext } from '../shared/src/types/chat';
 import menu from '../shared/src/data/menu.json';
 import type { MenuItem } from '../shared/src/types/menu';
@@ -208,6 +208,50 @@ async function main(): Promise<void> {
   await scenario('TEST 12 skip answer', [
     { user: "I'm hungry", expect: 'clarification', questionId: 'craving' },
     { user: 'Any', expect: 'clarification', questionId: 'budget' },
+  ]);
+
+  // ── TEST 13 — REGRESSION: exact task phrasings → craving + budget (no filler leak) ──
+  const taskCases: { user: string; want: string[]; budget: number | null }[] = [
+    { user: "I want to eat something spicy", want: ['spicy'], budget: null },
+    { user: "I'm craving something spicy", want: ['spicy'], budget: null },
+    { user: "I feel like eating something spicy", want: ['spicy'], budget: null },
+    { user: "I want something spicy under ₹150", want: ['spicy'], budget: 150 },
+    { user: "I only have ₹100 and want something spicy", want: ['spicy'], budget: 100 },
+    { user: "I'm craving noodles", want: ['noodles'], budget: null },
+    { user: 'I want paneer', want: ['paneer'], budget: null },
+    { user: 'I want a spicy paneer roll', want: ['spicy', 'paneer', 'roll'], budget: null },
+  ];
+  for (const c of taskCases) {
+    const p = extractUserPreferences(c.user);
+    const hasAll = c.want.every(w => p.cravings.includes(w));
+    check(`[${c.user}] cravings=${c.want.join('+')}`, hasAll, `got=[${p.cravings.join(',')}]`);
+    check(`[${c.user}] budget=${c.budget}`, p.budget === c.budget, `got=${p.budget}`);
+    // Regressions core: filler fragments must never slip into the wanted dish
+    if (c.want.length === 1 && c.want[0] !== 'spicy') {
+      const noFillerWanted = p.wantedFood === null || !/to eat|something|eat|feel/i.test(p.wantedFood);
+      check(`[${c.user}] no filler as wantedFood`, noFillerWanted, `wantedFood=${p.wantedFood}`);
+    }
+  }
+
+  // ── TEST 14 — REGRESSION: phrased craving still recommends a spicy dish ──
+  await scenario('TEST 14 phrasing still recommends', [
+    { user: "I want to eat something spicy", expect: 'clarification', questionId: 'budget' },
+    { user: 'I only have ₹100', expect: 'clarification', questionId: 'diet' },
+    {
+      user: "I'm vegetarian",
+      expect: 'recommendation',
+      assert: ({ recommendation }) => {
+        const item = recommendation.best?.item;
+        const explain = recommendation.explanation;
+        return (
+          Boolean(item) &&
+          (item?.price ?? 0) <= 100 &&
+          item?.dietType !== 'non-veg' &&
+          /spicy|spice|hot/i.test(`${item?.tags?.join(' ')} ${item?.mood?.join(' ')} ${item?.spiceLevel}`) &&
+          !/isn't available|isn't currently available|isn\'t on (?:the )?(?:canteen )?menu/i.test(explain)
+        );
+      },
+    },
   ]);
 
   console.log(`\n${pass} passed, ${fail} failed`);

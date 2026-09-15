@@ -46,6 +46,67 @@ const GENERIC_FOOD_WORDS: ReadonlySet<string> = new Set([
   'breakfast', 'lunch', 'dinner', 'sweet', 'mains', 'sides', 'combo', 'plate', 'dish', 'bite',
 ]);
 
+/**
+ * Semantic craving attributes the recommendation engine actually matches
+ * against structured menu fields (tags / mood / spiceLevel / calories /
+ * ingredients). `isAttributeWord` is what keeps gravitational fill words like
+ * "paneer" or "roll" out of the tag-scoring count: a taste/mood attribute is a
+ * dictionary word that map item-to-item semantics, not a specific food.
+ */
+const ATTRIBUTE_WORDS: ReadonlySet<string> = new Set([
+  ...CRAVING_WORDS,
+  ...MOOD_WORDS,
+  'veg', 'vegetarian', 'vegan', 'non-veg', 'nonveg', 'meat', 'gluten-free', 'glutenfree',
+  'spice', 'spices', 'spiced', 'fried', 'substantial', 'sweet', 'savoury', 'boost', 'wake',
+]);
+
+export function isAttributeWord(t: string): boolean {
+  return ATTRIBUTE_WORDS.has(t.toLowerCase().trim());
+}
+
+/**
+ * Conversational filler that carries NO food meaning on its own. These words
+ * are stripped from intent phrases and never become part of a craving or food
+ * query, so "to eat something spicy" normalizes to "spicy" instead of being
+ * treated as the requested dish. No entry here is a real food/ingredient word,
+ * so stripping is safe (see FOOD_WORDS for the vocabulary that is preserved).
+ */
+const FILLER_WORDS: ReadonlySet<string> = new Set([
+  // verb particles & inflected desire verbs
+  'to', 'of', 'eat', 'eating', 'eats', 'have', 'having', 'get', 'getting', 'grab', 'grabbing',
+  'order', 'ordering', 'buy', 'taking', 'bring', 'want', 'wanted', 'wants', 'wanting',
+  'need', 'needed', 'needs', 'needing', 'would', 'could', 'will', 'should', 'like', 'liked',
+  'craving', 'crave', 'cravings', 'craves', 'hungry', 'hungrier', 'feel', 'feeling', 'felt',
+  'looking', 'look', 'find', 'recommend', 'suggest', 'recommendation', 'suggestions',
+  // budget/time markers that must never leak into a food name
+  'under', 'below', 'only', 'within', 'around', 'about', 'max', 'limit', 'budget', 'over',
+  'less', 'than', 'more', 'rupee', 'rupees', 'rs',
+  // function words
+  'me', 'us', 'my', 'your', 'a', 'an', 'the', 'some', 'any', 'i', "i'm", 'im', "i'd", "i'll",
+  'just', 'also', 'still', 'really', 'quite', 'very', 'please', 'now', 'today', 'tonight',
+]);
+
+const CRAVING_TRIGGER_RE =
+  /\b(want|wanted|need|like|crave|craving|hangry|hungry|feel like|would like|i'?d like|looking for|hungry for|wish|order|give me|get me|recommend|suggest|desire)\b/i;
+
+/**
+ * A token counts as a "meaningful food token" only when it is neither
+ * conversational filler nor a generic noun nor a taste/mood attribute. This is
+ * what keeps raw sentence fragments ("to", "eat", "something") out of the food
+ * query while still letting real dishes through ("paneer", "noodles", "pizza").
+ */
+export function isMeaningfulFoodToken(t: string): boolean {
+  if (!t || t.length <= 1) return false;
+  if (/\d/.test(t)) return false;
+  return (
+    !NON_FOOD_TOKENS.has(t) &&
+    !FILLER_WORDS.has(t) &&
+    !GENERIC_FOOD_WORDS.has(t) &&
+    !CRAVING_WORDS.includes(t) &&
+    !MOOD_WORDS.includes(t)
+  );
+}
+
 const FOOD_WORDS = [
   'biryani', 'roll', 'dosa', 'thali', 'samosa', 'chikki', 'lassi', 'sandwich',
   'bhature', 'chole', 'curry', 'paneer', 'chicken', 'mutton', 'egg', 'prawn', 'fish',
@@ -181,10 +242,30 @@ function extractTastes(clauses: string[]): { cravings: string[]; dislikes: strin
       dislikes.push(...hasAnyWord(c, CRAVING_WORDS));
       dislikes.push(...hasAnyWord(c, MOOD_WORDS));
     } else {
+      // mood words ("comfort", "energizing") are legitimate cravings too —
+      // "I want comfort food" must normalize to craving = comfort.
       cravings.push(...hasAnyWord(c, CRAVING_WORDS));
+      cravings.push(...hasAnyWord(c, MOOD_WORDS));
     }
   }
   return { cravings: [...new Set(cravings)], dislikes: [...new Set(dislikes)] };
+}
+
+/**
+ * Food-name cravings ("I'm craving noodles", "I want paneer"). These are real
+ * dishes, so they are preserved (unlike conversational filler) and carried in
+ * `cravings` so the state model, the "what are you craving?" answer tracking
+ * and the matcher all see them. Only triggered when the user clearly asks for
+ * food so a bare mention ("do you sell noodles?") is not misread as a craving.
+ */
+function extractFoodWordCravings(clauses: string[]): string[] {
+  const out: string[] = [];
+  const positiveText = clauses.filter(c => !isNegative(c)).join(' ');
+  if (!CRAVING_TRIGGER_RE.test(positiveText)) return out;
+  for (const fw of FOOD_WORDS) {
+    if (new RegExp(`\\b${fw}\\b`, 'i').test(positiveText) && !out.includes(fw)) out.push(fw);
+  }
+  return out;
 }
 
 // ─────────────────────────── food request ───────────────────────────
@@ -208,12 +289,19 @@ function cleanFoodPhrase(phrase: string): string {
   let p = strip(phrase);
   p = p
     .replace(/\b(?:please|now|today|right now|asap|quickly)\b/g, ' ')
-    .replace(/\b(?:under|below|less than|at most|around|about|within|only|max)\s+rs?\.?\s*\d+/gi, ' ')
-    .replace(/\b(?:₹|rs\.?|inr)\s*\d+/gi, ' ')
-    .replace(/\d+\s*(?:₹|rs\.?)/gi, ' ')
+    .replace(/\b(?:under|below|less than|at most|around|about|within|only|max|limit|budget)\s*(?:of|is|at)?\s*(?:rs\.?|inr)?\s*\d+/gi, ' ')
+    .replace(/\b(?:rs\.?|inr)\s*\d+/gi, ' ')
+    .replace(/\d+\s*(?:rs\.?|₹)/gi, ' ')
     .replace(/\d+\s*(?:min|mins|minute|minutes)\b/gi, ' ')
-    .replace(/\b(?:and|or|with|but)\b/g, ' ')
-    .replace(/\s+/g, ' ').trim();
+    .replace(/\b(?:and|or|with|but)\b/g, ' ');
+  // Drop conversational filler and generic nouns — NEVER food names. This is
+  // what turns "to eat something spicy" into "spicy" and "comfort food" into
+  // "comfort" instead of treating the raw sentence as the requested dish.
+  p = p
+    .split(/\s+/)
+    .filter(t => t && !FILLER_WORDS.has(t) && !NON_FOOD_TOKENS.has(t) && !GENERIC_FOOD_WORDS.has(t))
+    .join(' ');
+  p = p.replace(/\s+/g, ' ').trim();
   return p;
 }
 
@@ -236,17 +324,12 @@ function extractFoodQuery(clauses: string[]): {
     if (/\blike\b/.test(' ' + phrase + ' ')) foodRequestLike = true;
     phrase = phrase.replace(/\blike\b/g, ' ').replace(/\s+/g, ' ').trim();
     if (!phrase) continue;
-    if (!wantedFood) wantedFood = phrase;
-    const toks = tokensOf(phrase);
-    const real = toks.filter(
-      t =>
-        t.length > 1 &&
-        !/\d/.test(t) &&
-        !NON_FOOD_TOKENS.has(t) &&
-        !GENERIC_FOOD_WORDS.has(t) &&
-        !CRAVING_WORDS.includes(t) &&
-        !MOOD_WORDS.includes(t)
-    );
+    // Keep only real dishes — never "to eat something spicy"/"eating something
+    // spicy" raw fragments. wantedFood stays null when the user only expressed
+    // a taste attribute, so the diagnostics never say "Spicy isn't available".
+    const real = tokensOf(phrase).filter(t => isMeaningfulFoodToken(t) && FOOD_WORDS.includes(t));
+    if (real.length === 0) continue;
+    if (!wantedFood) wantedFood = real.join(' ');
     for (const t of real) {
       if (!foodTokens.includes(t)) foodTokens.push(t);
     }
@@ -368,6 +451,8 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
 
   const allergies = extractAllergies(clauses);
   const { cravings, dislikes: tasteDislikes } = extractTastes(clauses);
+  const foodWordCravings = extractFoodWordCravings(clauses);
+  const allCravings = [...new Set([...cravings, ...foodWordCravings])];
   const { foodQuery, wantedFood, foodRequestLike } = extractFoodQuery(clauses);
 
   const foodDislikes = extractFoodDislikes(clauses, diet);
@@ -386,7 +471,7 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
   const hasFoodRequest =
     /\b(want|crave|hungry|eat|food|meal|snack|drink|order|suggest|recommend|something|anything|noodles|biryani|sandwich|lunch|dinner)\b/i.test(lowerMessage) ||
     foodQuery.length > 0 ||
-    cravings.length > 0 ||
+    allCravings.length > 0 ||
     Boolean(diet) ||
     allergies.length > 0 ||
     budget != null ||
@@ -399,7 +484,7 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
     time,
     diet,
     allergens: [],
-    cravings,
+    cravings: allCravings,
     dislikes,
     mood: [...new Set([...(context?.mood ?? []), ...mood])].slice(-4),
     foodQuery,
@@ -428,7 +513,7 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
   const ctxTime = context?.time ?? null;
   const mergedTime = time ?? ctxTime;
   const ctxCravings = context?.cravings ?? [];
-  const mergedCravings = [...new Set([...ctxCravings, ...cravings])].slice(-6);
+  const mergedCravings = [...new Set([...ctxCravings, ...allCravings])].slice(-6);
   const ctxDislikes = context?.dislikes ?? [];
   const mergedDislikes = [...new Set([...ctxDislikes, ...dislikes])];
   const ctxMood = context?.mood ?? [];
@@ -436,7 +521,7 @@ export function extractUserPreferences(message: string, context?: ChatContext): 
 
   // which questions did THIS message answer?
   const answered: string[] = [];
-  if (cravings.length > 0 || mood.length > 0 || foodQuery.length > 0) answered.push('craving');
+  if (allCravings.length > 0 || mood.length > 0 || foodQuery.length > 0) answered.push('craving');
   if (budget != null) answered.push('budget');
   if (diet) answered.push('diet');
   if (allergies.length > 0 || /\bno\s+food\s+allergies?\b|\bno\s+allergies?\b|\bno\s+allergen\b/i.test(lowerMessage)) answered.push('allergy');

@@ -1,5 +1,6 @@
 import type { MenuItem } from '../types/menu';
 import type { ExtractedPrefs } from './intent';
+import { isAttributeWord } from './intent';
 import { preferenceMatcher, matchItemTag, categoryFoodMatch, exactFoodMatch, matchesFoodQuery } from './preferenceMatcher';
 import type { MatchResult } from '../types/recommendation';
 
@@ -36,8 +37,8 @@ function dietFits(item: MenuItem, diet: string | null): boolean {
 
 function semanticTokens(prefs: ExtractedPrefs): string[] {
   const set = new Set<string>();
-  for (const c of prefs.cravings) if (c.length > 1) set.add(c);
-  for (const m of prefs.mood) if (m.length > 1) set.add(m);
+  for (const c of prefs.cravings) if (c.length > 1 && isAttributeWord(c)) set.add(c);
+  for (const m of prefs.mood) if (m.length > 1 && isAttributeWord(m)) set.add(m);
   return [...set];
 }
 

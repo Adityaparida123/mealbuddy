@@ -1,7 +1,7 @@
 import type { MenuItem } from '../types/menu';
 import type { ChatContext } from '../types/chat';
 import type { Recommendation, MatchResult, Clarification } from '../types/recommendation';
-import { extractUserPreferences, type ExtractedPrefs } from './intent';
+import { extractUserPreferences, isAttributeWord, isMeaningfulFoodToken, type ExtractedPrefs } from './intent';
 import { allergyFilter } from './allergyFilter';
 import { availabilityFilter } from './availabilityFilter';
 import { dietFilter } from './dietFilter';
@@ -9,7 +9,7 @@ import { budgetFilter } from './budgetFilter';
 import { timeFilter } from './timeFilter';
 import { dislikeFilter, matchesDislike } from './dislikeFilter';
 import { rankCandidates, categoryPoolFromQuery } from './matchScore';
-import { exactFoodMatch, matchesFoodQuery } from './preferenceMatcher';
+import { exactFoodMatch, matchesFoodQuery, matchItemTag } from './preferenceMatcher';
 import { rankCandidatesWithGemini } from '../services/gemini';
 import { decideClarification } from './clarifier';
 import { logStage } from './debug';
@@ -34,6 +34,20 @@ const DIET_LABELS: Record<string, string> = {
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Human-friendly label for a semantic craving ("spicy" -> "spicy food",
+ * ["spicy", "comfort"] -> "spicy and comfort food") used when no menu item
+ * actually carries the requested attribute.
+ */
+function cravingFoodLabel(terms: string[]): string {
+  const unique = [...new Set(terms)];
+  if (unique.length === 0) return 'food';
+  const list = unique.length > 1
+    ? `${unique.slice(0, -1).join(', ')} and ${unique[unique.length - 1]}`
+    : unique[0];
+  return `${list} food`;
 }
 
 // ─────────────────────────── hard-rule validation ───────────────────────────
@@ -276,7 +290,11 @@ async function recommend(
   }
 
   // ── 9. Requested-food diagnostics for the message ──
-  const requestedLabel = prefs.wantedFood ?? prefs.foodQuery[0] ?? null;
+  // Only REAL dish names ("chicken biryani", "pizza") produce a "not available"
+  // diagnostic. A taste attribute ("spicy", "comfort") is never a requested
+  // dish, so it must never be echoed as "Spicy isn't available on the menu" —
+  // it is matched semantically against tags/mood/spiceLevel instead.
+  const requestedLabel = prefs.wantedFood ?? (prefs.foodQuery.filter(isMeaningfulFoodToken).join(' ') || null);
   const requestedUnavailable = requestedLabel ? describeRequestedState(requestedLabel, menu, prefs) : null;
 
   // ── 10. Deterministic ranking (covers fallback and category credit) ──
@@ -285,6 +303,9 @@ async function recommend(
   let best = ranked[0] ?? null;
   let alternatives = ranked.slice(1, 5);
   logStage('final valid candidates', pool.length, pool.map(i => `${i.id}:${i.name}`));
+
+  const cravingTerms = prefs.cravings.filter(t => isAttributeWord(t));
+  const cravingMiss = cravingTerms.length > 0 && !pool.some(item => cravingTerms.some(t => matchItemTag(item, t)));
 
   // ── 11. Gemini ranking (valid candidates only) ──
   let aiUsed = false;
@@ -318,6 +339,8 @@ async function recommend(
   } else if (requestedUnavailable) {
     message = requestedUnavailable;
     message += best ? ' The closest safe options from today’s menu:' : '';
+  } else if (cravingMiss && best) {
+    message = `I couldn't find a menu item matching your craving for ${cravingFoodLabel(cravingTerms)}. Here are the closest safe options from today's menu.`;
   } else if (aiUsed && explanation) {
     message = explanation;
   } else if (prefs.wantsAvailability) {
